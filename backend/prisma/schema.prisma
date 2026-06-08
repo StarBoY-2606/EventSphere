@@ -1,0 +1,178 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  PHOTOGRAPHER
+  CLUB_MEMBER
+  VIEWER
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  SYSTEM
+}
+
+model User {
+  id                 String           @id @default(uuid())
+  email              String           @unique
+  passwordHash       String
+  name               String
+  role               Role             @default(VIEWER)
+  avatarUrl          String?
+  referenceSelfieUrl String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  // Relations
+  uploadedMedia      Media[]          @relation("UserUploadedMedia")
+  comments           Comment[]
+  likes              Like[]
+  favourites         Favourite[]
+  notifications      Notification[]
+  faceEmbedding      FaceEmbedding?
+
+  @@index([email])
+}
+
+model Event {
+  id          String     @id @default(uuid())
+  name        String
+  description String
+  category    String
+  date        DateTime
+  coverImage  String
+  visibility  Visibility @default(PUBLIC)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  albums      Album[]    @relation("EventAlbums")
+  media       Media[]    @relation("EventMedia")
+
+  @@index([category])
+  @@index([date])
+}
+
+model Album {
+  id          String   @id @default(uuid())
+  eventId     String
+  name        String
+  coverImage  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  event       Event    @relation("EventAlbums", fields: [eventId], references: [id], onDelete: Cascade)
+  media       Media[]  @relation("AlbumMedia")
+
+  @@index([eventId])
+}
+
+model Media {
+  id          String   @id @default(uuid())
+  eventId     String
+  albumId     String
+  url         String
+  thumbnailUrl String
+  uploadedBy  String
+  uploadDate  DateTime @default(now())
+  tags        String[] // Array of strings for tags
+  createdAt   DateTime @default(now())
+
+  // Relations
+  event       Event    @relation("EventMedia", fields: [eventId], references: [id], onDelete: Cascade)
+  album       Album    @relation("AlbumMedia", fields: [albumId], references: [id], onDelete: Cascade)
+  uploader    User     @relation("UserUploadedMedia", fields: [uploadedBy], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  likes       Like[]
+  favourites  Favourite[]
+
+  @@index([eventId])
+  @@index([albumId])
+  @@index([uploadedBy])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  mediaId   String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  // Relations
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([mediaId])
+  @@index([userId])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  mediaId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, userId])
+  @@index([mediaId])
+  @@index([userId])
+}
+
+model Favourite {
+  id        String   @id @default(uuid())
+  mediaId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, userId])
+  @@index([mediaId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  message   String
+  mediaId   String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model FaceEmbedding {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  vector    Float[]  // PostgreSQL extension pgvector integration
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

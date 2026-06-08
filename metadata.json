@@ -1,0 +1,6 @@
+{
+  "name": "EventSphere",
+  "description": "AI-Powered Event & Media Management Platform with Auto-Tagging, Face Recognition, Analytics, and S3 Storage Mocking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

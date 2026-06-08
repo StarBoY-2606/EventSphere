@@ -1,0 +1,9 @@
+backend/node_modules
+backend/dist
+backend/data.json
+backend/activities.json
+backend/.env
+frontend/node_modules
+.git
+.gitignore
+*.md

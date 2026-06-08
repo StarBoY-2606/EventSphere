@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: eventsphere-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eventsphere
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  eventsphere:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eventsphere-app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PROVIDER=postgresql
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/eventsphere?schema=public
+      - JWT_SECRET=ac8d14e785bd03da69c0a8af718bc3e939289c916c2d18bdc4f4b9f9e1169d350bb04fbd58f2854fdf77b7d6307acd636cbc7021199bfcf833522100ee0a4b69
+      - GEMINI_API_KEY= AIzaSyCdPYs89cWP0IgqcGh42_AA10Lp5-oIaaQ
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
